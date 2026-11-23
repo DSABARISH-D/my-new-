@@ -1,4 +1,4 @@
-const CACHE="sabarish-shell-v1";
+const CACHE="sabarish-shell-v2";
 const PUBLIC_FILES=["/offline.html","/icons/icon-192.png","/icons/icon-512.png","/manifest.webmanifest"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(PUBLIC_FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith("sabarish-shell-")&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
