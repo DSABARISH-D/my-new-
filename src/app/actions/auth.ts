@@ -9,6 +9,14 @@ import type { ActionResult } from "@/lib/types";
 const email = z.string().trim().email().max(254);
 const credentials = z.object({email,password:z.string().min(1).max(512)});
 const unavailable = {ok:false,error:"The sign-in service is unavailable. Please try again shortly."};
+function loginError(error:{code?:string;status?:number}|null|undefined):ActionResult {
+  if(error?.status===429) return {ok:false,error:"Too many attempts. Please try again later."};
+  if(error?.code==="email_not_confirmed") return {ok:false,error:"Confirm your email address before signing in. Check your inbox or request a fresh invitation."};
+  if(error?.code==="invalid_credentials") return {ok:false,error:"The email or password is incorrect. Check for extra spaces and try again."};
+  if(error?.status && error.status>=500) return unavailable;
+  if(error?.status===400) return {ok:false,error:"Supabase could not validate this sign-in request. Verify the email and password, then try again."};
+  return unavailable;
+}
 
 export async function login(input:unknown):Promise<ActionResult> {
   const parsed=credentials.safeParse(input);
@@ -16,11 +24,15 @@ export async function login(input:unknown):Promise<ActionResult> {
   if(!supabaseConfig()) return {ok:false,error:"The database connection is not configured. Contact the business owner."};
   try {
     const db=await serverClient();
-    const {data,error}=await db.auth.signInWithPassword(parsed.data);
+    const credentialsWithNormalizedEmail={email:parsed.data.email.toLowerCase(),password:parsed.data.password};
+    const {data,error}=await db.auth.signInWithPassword(credentialsWithNormalizedEmail);
     if(error || !data.user) {
-      if(error?.status === 429) return {ok:false,error:"Too many attempts. Please try again later."};
-      if(error?.status && error.status>=500) return unavailable;
-      return {ok:false,error:"Check your email and password, then try again."};
+      return loginError(error);
+    }
+    const {data:{user:confirmedUser},error:userError}=await db.auth.getUser();
+    if(userError || confirmedUser?.id!==data.user.id) {
+      await db.auth.signOut({scope:"local"});
+      return unavailable;
     }
     const membership=await db.from("business_memberships").select("id").eq("user_id",data.user.id).eq("active",true).limit(1);
     if(membership.error || !membership.data?.length) {
@@ -37,7 +49,7 @@ export async function recover(input:unknown):Promise<ActionResult> {
   if(!parsed.success) return {ok:false,error:"Enter a valid work email."};
   try {
     const db=await serverClient();
-    const {error}=await db.auth.resetPasswordForEmail(parsed.data.email,{redirectTo:appOrigin()+"/auth/confirm"});
+    const {error}=await db.auth.resetPasswordForEmail(parsed.data.email.toLowerCase(),{redirectTo:appOrigin()+"/auth/confirm?purpose=recovery"});
     if(error?.status===429) return {ok:false,error:"Please wait before requesting another link."};
     if(error && (!error.status || error.status>=500)) {incident("recover",error.code);return unavailable;}
     // Acknowledgement is identical for known and unknown addresses.

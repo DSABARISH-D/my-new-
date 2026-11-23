@@ -16,4 +16,8 @@ describe("Staff sign in",()=>{
  fireEvent.click(screen.getByRole("button",{name:"Sign in"}));expect(await screen.findByRole("alert")).toHaveProperty("textContent","Check your email and password.");expect((screen.getByLabelText("Email address") as HTMLInputElement).value).toBe("staff@example.test");
  });
  it("submits a recovery request and shows a generic acknowledgement",async()=>{calls.recover.mockResolvedValue({ok:true});render(<AuthScreen/>);fireEvent.click(screen.getByText("Forgot password?"));fireEvent.change(screen.getByLabelText("Email address"),{target:{value:"owner@example.test"}});fireEvent.click(screen.getByRole("button",{name:"Send recovery link"}));await waitFor(()=>expect(screen.getByRole("status").textContent).toContain("If your account is active"));});
+ it("explains a configuration problem instead of showing a generic login failure",()=>{
+   render(<AuthScreen reason="configuration"/>);
+   expect(screen.getByRole("alert").textContent).toContain("database connection is not configured");
+ });
 });

@@ -15,6 +15,7 @@ const permitted:Record<ActionKind,Role[]>={
 };
 const expired={ok:false,error:"Your session or staff access has expired. Sign in again."};
 const forbidden={ok:false,error:"Your role does not have permission for this action."};
+const missingServerSecret={ok:false,error:"The server sign-in service is not configured. Contact the business owner."};
 
 type DbError={code?:string;message:string};
 function writeError(error:DbError):ActionResult {
@@ -39,7 +40,15 @@ async function invite(context:Context, input:unknown, requestId:string):Promise<
   const existing=await db.rpc("tracker_write",payload);
   if(!existing.error) return {ok:true};
   if(existing.error.message!=="Account not found") return writeError(existing.error);
-  const {error}=await adminClient().auth.admin.inviteUserByEmail(values.email,{data:{full_name:values.full_name},redirectTo:appOrigin()+"/auth/confirm"});
+  let inviteError:Error|null=null;
+  try {
+    const {error}=await adminClient().auth.admin.inviteUserByEmail(values.email,{data:{full_name:values.full_name},redirectTo:appOrigin()+"/auth/confirm?purpose=invite"});
+    inviteError=error;
+  } catch(error) {
+    if(error instanceof Error && error.message.includes("server-only Supabase secret")) return missingServerSecret;
+    throw error;
+  }
+  const error=inviteError;
   if(error && !["email_exists","user_already_exists"].includes(error.code||"")) {
     if(error.status===429) return {ok:false,error:"Email delivery is rate limited. Please try again later."};
     return {ok:false,error:"The invitation email could not be sent. Reference "+incident("send_invite",error.code)};

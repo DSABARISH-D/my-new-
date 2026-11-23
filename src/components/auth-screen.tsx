@@ -12,7 +12,7 @@ export function AuthScreen({initialMode="login",reason}:{initialMode?:Mode;reaso
  const router=useRouter();
  const [mode,setMode]=useState(initialMode);
  const [visible,setVisible]=useState(false),[busy,setBusy]=useState(false),[email,setEmail]=useState(""),[password,setValue]=useState("");
- const [error,setError]=useState(reason==="staff"?"Your account needs an active staff assignment. Contact the owner.":reason==="link"?"This link has expired. Request another password email.":"");
+ const [error,setError]=useState(reason==="staff"?"Your account needs an active staff assignment. Contact the owner.":reason==="link"?"This link has expired. Request another password email.":reason==="configuration"?"The database connection is not configured. Contact the business owner.":reason==="confirmed"?"Your email is confirmed. Sign in with your password.":"");
  const [sent,setSent]=useState(false);
  function changeMode(newMode:Mode){setMode(newMode);setValue("");setError("");setSent(false);setVisible(false)}
  async function submit(event:React.FormEvent){

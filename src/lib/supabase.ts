@@ -24,6 +24,7 @@ export const serverClient = cache(async () => {
 export function adminClient() {
   const config = supabaseConfig();
   const key = process.env.SUPABASE_SECRET_KEY;
-  if (!config || !key) throw new Error("A server credential is required for this operation.");
+  if (!config) throw new Error("The business database connection has not been configured.");
+  if (!key) throw new Error("A server-only Supabase secret key is not configured.");
   return createClient(config.url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
 }

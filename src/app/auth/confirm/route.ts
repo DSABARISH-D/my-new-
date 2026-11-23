@@ -14,14 +14,17 @@ export async function GET(request:NextRequest) {
   const type=url.searchParams.get("type");
   const hash=url.searchParams.get("token_hash");
   const code=url.searchParams.get("code");
+  const purpose=url.searchParams.get("purpose");
   try {
     const db=await serverClient();
-    if(hash && (type==="recovery" || type==="invite")) {
-      const {error}=await db.auth.verifyOtp({token_hash:hash,type});
+    if(hash && (type==="recovery" || type==="invite" || type==="signup" || type==="email")) {
+      const otpType=type==="signup"||type==="email"?"email":type;
+      const {error}=await db.auth.verifyOtp({token_hash:hash,type:otpType});
+      if(!error && (type==="signup"||type==="email")) return next("/login?reason=confirmed");
       if(!error) return next("/reset-password");
     } else if(code) {
       const {error}=await db.auth.exchangeCodeForSession(code);
-      if(!error) return next("/reset-password");
+      if(!error) return next(purpose==="recovery"||purpose==="invite" ? "/reset-password" : "/reset-password");
     }
   } catch {incident("verify_email_link");}
   return next("/login?reason=link");

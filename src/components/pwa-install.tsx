@@ -13,7 +13,7 @@ export function PwaInstall() {
   const [open,setOpen]=useState(false);
   const [installed,setInstalled]=useState(()=>typeof window==="undefined"?false:
     window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & {standalone?:boolean}).standalone===true);
-  const [ios,setIos]=useState(()=>typeof window==="undefined"?false:/iphone|ipad|ipod/i.test(navigator.userAgent));
+  const [ios]=useState(()=>typeof window==="undefined"?false:/iphone|ipad|ipod/i.test(navigator.userAgent));
   const [iosDismissed,setIosDismissed]=useState(()=>typeof window==="undefined"?false:sessionStorage.getItem("sabarish-pwa-dismissed")==="true");
 
   useEffect(()=>{
