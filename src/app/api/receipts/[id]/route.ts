@@ -1,5 +1,5 @@
 import { sessionContext } from "@/lib/data";
-import { adminClient,serverClient } from "@/lib/supabase";
+import { serverClient } from "@/lib/supabase";
 import { requestIdSchema } from "@/lib/validation";
 import { incident } from "@/lib/monitor";
 
@@ -15,7 +15,7 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
     if(receipt.error) return fail(503,"Unable to load the receipt.");
     const path=receipt.data?.receipt_path;
     if(typeof path!=="string" || !path.startsWith(context.business.id+"/")) return fail(404,"Receipt not found.");
-    const signed=await adminClient().storage.from("receipts").createSignedUrl(path,60,{download:true});
+    const signed=await db.storage.from("receipts").createSignedUrl(path,60,{download:true});
     if(signed.error || !signed.data) return fail(503,"Receipt download is unavailable.");
     return new Response(null,{status:303,headers:{Location:signed.data.signedUrl,"Cache-Control":"private, no-store","Referrer-Policy":"no-referrer"}});
   } catch { incident("download_receipt");return fail(503,"Receipt download is unavailable."); }

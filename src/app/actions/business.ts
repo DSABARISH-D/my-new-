@@ -40,7 +40,7 @@ async function invite(context:Context, input:unknown, requestId:string):Promise<
   const existing=await db.rpc("tracker_write",payload);
   if(!existing.error) return {ok:true};
   if(existing.error.message!=="Account not found") return writeError(existing.error);
-  let inviteError:Error|null=null;
+  let inviteError:{code?:string;status?:number;message:string}|null=null;
   try {
     const {error}=await adminClient().auth.admin.inviteUserByEmail(values.email,{data:{full_name:values.full_name},redirectTo:appOrigin()+"/auth/confirm?purpose=invite"});
     inviteError=error;
@@ -97,7 +97,7 @@ export async function uploadReceipt(form:FormData):Promise<ActionResult> {
     if(closing.error) return writeError(closing.error);
     if(closing.data?.status==="locked") return {ok:false,error:"This business day is locked."};
     const path=[context.business.id,context.user.id,crypto.randomUUID()+"."+detected.ext].join("/");
-    const upload=await adminClient().storage.from("receipts").upload(path,bytes,{upsert:false,contentType:detected.mime,cacheControl:"0"});
+    const upload=await db.storage.from("receipts").upload(path,bytes,{upsert:false,contentType:detected.mime,cacheControl:"0"});
     if(upload.error) return {ok:false,error:"Receipt upload failed. Please try again. Reference "+incident("upload_receipt")};
     return {ok:true,path};
   } catch {return {ok:false,error:"The receipt could not be uploaded. Reference "+incident("upload_receipt")};}
