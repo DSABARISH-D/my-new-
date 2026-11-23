@@ -49,6 +49,8 @@ export function Sales({ctx,data,date,period}:{ctx:Context;data:Ledger;date:strin
   return <main className="mod"><Heading title="Sales" description="Record collections and balance the cash drawer."><DatePicker date={date} extra={{period:period||"day"}}/></Heading>
     <div className="mod-split"><Panel title="Payment collections" aside={<LockBadge locked={locked}/>}>
       <div className="mod-meta">{displayDate(date)}<span>·</span><Actor ctx={ctx}/></div>
+      {/* react-hook-form reads this ref during submit, not during rendering. */}
+      {/* eslint-disable-next-line react-hooks/refs */}
       <form onSubmit={handleSubmit(submit)}><fieldset disabled={!editable||mutation.pending} className="mod-fields">
         {inputs.map(({k,label,Icon,tone})=><div className="mod-payrow" key={k}><span className={"mod-symbol "+tone}><Icon size={20}/></span><Field label={label} error={errors[k]?.message}><div className="mod-amount"><span>₹</span><input aria-label={label} inputMode="decimal" type="text" placeholder="0.00" {...register(k,amountRule)}/></div></Field></div>)}
         <div className="mod-payrow"><span className="mod-symbol red"><ReceiptText size={20}/></span><div className="mod-read"><span>Cash-paid expenses</span><strong>{money(sums.cashPaid)}</strong></div></div>

@@ -51,6 +51,8 @@ function ExpenseForm({data,date,entry}:{data:Ledger;date:string;entry?:Expense})
     }catch(e){mutation.setFeedback({ok:false,message:e instanceof Error?e.message:"Upload failed. Reconnect and try again."});}
     finally{setUploading(false);busy.current=false;}
   }
+  // react-hook-form reads this ref during submit, not during rendering.
+  // eslint-disable-next-line react-hooks/refs
   return <form onSubmit={handleSubmit(submit)}><fieldset className="mod-fields" disabled={mutation.pending||uploading}>
     <div className="mod-grid2"><Field label="Category" error={errors.category_id?.message}><select {...register("category_id",{required:"Select an expense category."})} required>{!categories.length&&<option value="">No active categories</option>}{categories.map(c=><option key={c.id} value={c.id}>{c.name}{!c.active?" (disabled)":""}</option>)}</select></Field>
       <Field label="Amount" error={errors.amount?.message}><div className="mod-amount"><span>₹</span><input aria-label="Amount" inputMode="decimal" type="text" placeholder="0.00" {...register("amount",{required:"Enter the expense amount.",pattern:{value:/^\d{1,10}(\.\d{1,2})?$/,message:"Enter a non-negative amount with up to two decimals."}})}/></div></Field></div>

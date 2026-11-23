@@ -1,5 +1,5 @@
 import type {Metadata,Viewport} from "next";
-import "@fontsource-variable/inter/latin.css";
+import "@fontsource-variable/inter";
 import "@fontsource/barlow-condensed/latin-700.css";
 import "./globals.css";
 import {Connectivity} from "@/components/connectivity";
