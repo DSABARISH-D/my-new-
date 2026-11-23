@@ -1,0 +1,24 @@
+export type Role = "owner" | "manager" | "staff" | "viewer";
+export type StaffRole = Exclude<Role, "owner">;
+export type Method = "cash" | "upi" | "bank_transfer" | "other";
+export type PaymentStatus = "paid" | "pending" | "due";
+export type Person = { id: string; email: string; full_name: string };
+export type Business = { id: string; name: string; timezone: string; phone: string | null; address: string | null; gstin: string | null };
+export type Preferences = { reminders_enabled: boolean; notifications_enabled: boolean };
+export type Context = { user: Person; business: Business; preferences: Preferences; role: Role };
+export type Category = { id: string; name: string; color: string; active: boolean };
+type Entry = { id: string; business_date: string; recorded_by: string; created_at: string };
+export type Sale = Entry & { cash_collected: number; upi_collected: number; opening_float: number; notes: string | null; updated_at: string; version: number };
+export type Expense = Entry & {
+  category_id: string; amount: number; payment_method: Method; payment_status: PaymentStatus;
+  vendor_name: string | null; quantity: number | null; unit: string | null; notes: string | null;
+  receipt_path: string | null; voided_at: string | null; updated_at: string; version: number;
+};
+export type Adjustment = Entry & { transaction_type: "cash_in" | "cash_out"; amount: number; notes: string };
+export type Reconciliation = Entry & { actual_amount: number };
+export type Closing = { id: string; business_date: string; status: "open" | "locked"; locked_by: string | null; locked_at: string | null; reopened_by: string | null; reopen_reason: string | null; reopened_at: string | null };
+export type Ledger = { sales: Sale[]; expenses: Expense[]; ledger: Adjustment[]; reconciliations: Reconciliation[]; closings: Closing[]; categories: Category[]; people: Person[] };
+export type Member = { user_id: string; full_name: string; email: string; role: Role; active: boolean };
+export type Audit = { id: string; entity_type: string; action: string; actor_id: string; created_at: string; reason: string | null };
+export type StaffData = { members: Member[]; audit: Audit[] };
+export type ActionResult = { ok: boolean; error?: string; id?: string; path?: string };
