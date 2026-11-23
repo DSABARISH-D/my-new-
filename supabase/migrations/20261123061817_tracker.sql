@@ -154,6 +154,19 @@ create table tracker_private.invite_attempts (
 );
 create index invite_window on tracker_private.invite_attempts(business_id,attempted_at);
 
+-- GoTrue can set invited_at after inserting the user, in the same transaction.
+-- Inspect the final row at commit. App metadata is writable only by Auth admins.
+create function tracker_private.require_provisioned_account() returns trigger language plpgsql security definer set search_path='' as $$
+begin
+  if exists(select 1 from auth.users where id=new.id and invited_at is null
+    and (raw_app_meta_data->'staff_provisioned') is distinct from 'true'::jsonb) then
+    raise exception 'A staff invitation is required';
+  end if;
+  return null;
+end $$;
+create constraint trigger tracker_invite_only after insert on auth.users
+  deferrable initially deferred for each row execute function tracker_private.require_provisioned_account();
+
 create function tracker_private.sync_profile() returns trigger language plpgsql security definer set search_path='' as $$
 begin
   if new.email is not null then

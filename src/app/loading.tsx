@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="splash" aria-busy="true"><span className="splash-mark">SF</span><h1>Sabarish Fast Food</h1><span className="splash-loader" role="status" aria-label="Loading workspace"/></main>}
